@@ -66,7 +66,7 @@ const clienteSchema = new mongoose.Schema({
     dependencia: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
     },
 },{
     timestamps: true,
