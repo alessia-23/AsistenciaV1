@@ -55,36 +55,48 @@ const obtenerTecnicos = async (req, res) => {
     }
 };
 
-// BUSCAR POR CÉDULA O APELLIDO
+// BUSCAR TÉCNICO POR ID
+const obtenerTecnicoPorId = async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Validar ObjectId
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                error: "ID no válido"
+            });
+        }
+        const tecnico = await Tecnico.findById(id);
+        if (!tecnico) {
+            return res.status(404).json({
+                error: "Técnico no encontrado"
+            });
+        }
+        res.json({ tecnico });
+    } catch (error) {
+        res.status(500).json({
+            error: "Error del servidor"
+        });
+    }
+};
+
+// BUSCAR POR CÉDULA 
 const buscarTecnico = async (req, res) => {
     try {
-        let { cedula, apellido } = req.query;
-        if (cedula) cedula = cedula.trim();
-        if (apellido) apellido = apellido.trim();
-        if (!cedula && !apellido) {
+        let { cedula } = req.query;
+        // Validar que envíen la cédula
+        if (!cedula) {
             return res.status(400).json({
-                error: "Debe enviar cédula o apellido"
+                error: "Debe enviar la cédula"
             });
         }
-        if (cedula && apellido) {
-            return res.status(400).json({
-                error: "Debe buscar por cédula o por apellido, no por ambos"
-            });
-        }
-        let filtro = {};
-        if (cedula) {
-            filtro.cedula = cedula;
-        }
-        if (apellido) {
-            filtro.apellido = { $regex: apellido, $options: "i" };
-        }
-        const tecnicos = await Tecnico.find(filtro);
-        if (tecnicos.length === 0) {
+        cedula = cedula.trim();
+        const tecnico = await Tecnico.findOne({ cedula });
+        if (!tecnico) {
             return res.status(404).json({
-                error: "No se encontraron técnicos"
+                error: "Técnico no encontrado"
             });
         }
-        res.json({ tecnicos });
+        res.json({ tecnico });
     } catch (error) {
         res.status(500).json({
             error: "Error del servidor"
@@ -186,5 +198,6 @@ export {
     obtenerTecnicos,
     buscarTecnico,
     actualizarTecnico,
-    eliminarTecnico
+    eliminarTecnico,
+    obtenerTecnicoPorId
 };

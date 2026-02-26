@@ -1,5 +1,5 @@
 import express from "express";
-import { crearCliente, obtenerClientes, buscarCliente, actualizarCliente, eliminarCliente} from "../controllers/clienteController.js";
+import { crearCliente, obtenerClientes, buscarCliente, actualizarCliente, eliminarCliente, obtenerClientePorId} from "../controllers/clienteController.js";
 import protegerRuta from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -8,6 +8,7 @@ const router = express.Router();
 router.post("/crear", protegerRuta, crearCliente);
 router.get("/listar", protegerRuta, obtenerClientes);
 router.get("/buscar", protegerRuta, buscarCliente);
+router.get("/buscarid/:id",protegerRuta,obtenerClientePorId)
 router.put("/actualizar/:id", protegerRuta, actualizarCliente);
 router.delete("/eliminar/:id", protegerRuta, eliminarCliente);
 export default router;

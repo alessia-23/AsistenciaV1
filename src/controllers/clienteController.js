@@ -51,29 +51,47 @@ const obtenerClientes = async (req, res) => {
     }
 };
 
+// BUSCAR CLIENTE POR ID
+const obtenerClientePorId = async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Validar que el ID sea válidoi es decir que esté en la bd
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                error: "ID no válido"
+            });
+        }
+        const cliente = await Cliente.findById(id);
+        if (!cliente) {
+            return res.status(404).json({
+                error: "Cliente no encontrado"
+            });
+        }
+        res.json({ cliente });
+    } catch (error) {
+        res.status(500).json({
+            error: "Error del servidor"
+        });
+    }
+};
 // BUSCAR CLIENTE (cedula, apellido o dependencia)
 const buscarCliente = async (req, res) => {
     try {
-        let { cedula, apellido, dependencia } = req.query;
-        if (cedula) cedula = cedula.trim();
-        if (apellido) apellido = apellido.trim();
-        if (dependencia) dependencia = dependencia.trim();
-        if (!cedula && !apellido && !dependencia) {
+        let { cedula } = req.query;
+        // Validar que envíen la cédula
+        if (!cedula) {
             return res.status(400).json({
-                error: "Debe enviar cédula, apellido o dependencia"
+                error: "Debe enviar la cédula"
             });
         }
-        let filtro = {};
-        if (cedula) filtro.cedula = cedula;
-        if (apellido) filtro.apellido = { $regex: apellido, $options: "i" };
-        if (dependencia) filtro.dependencia = { $regex: dependencia, $options: "i" };
-        const clientes = await Cliente.find(filtro);
-        if (clientes.length === 0) {
+        cedula = cedula.trim();
+        const cliente = await Cliente.findOne({ cedula });
+        if (!cliente) {
             return res.status(404).json({
-                error: "No se encontraron clientes"
+                error: "Cliente no encontrado"
             });
         }
-        res.json({ clientes });
+        res.json({ cliente });
     } catch (error) {
         res.status(500).json({
             error: "Error del servidor"
@@ -166,6 +184,7 @@ export {
     crearCliente,
     obtenerClientes,
     buscarCliente,
+    obtenerClientePorId,
     actualizarCliente,
     eliminarCliente
 };

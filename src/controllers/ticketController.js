@@ -73,58 +73,53 @@ const obtenerTickets = async (req, res) => {
     }
 };
 
-// BUSCAR TICKET
-const buscarTicket = async (req, res) => {
+// BUSCAR TICKET POR ID
+const obtenerTicketPorId = async (req, res) => {
     try {
-        let { codigo, cliente, tecnico } = req.query;
-        if (codigo) codigo = codigo.trim();
-        if (cliente) cliente = cliente.trim();
-        if (tecnico) tecnico = tecnico.trim();
-        if (!codigo && !cliente && !tecnico) {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({
-                msg: "Debe enviar al menos un parámetro de búsqueda"
+                msg: "ID no válido"
             });
         }
-        const filtro = {};
-        // Buscar por código
-        if (codigo) {
-            filtro.codigo = { $regex: codigo, $options: "i" };
-        }
-        // Buscar por cliente (nombre, apellido o cédula)
-        if (cliente) {
-            const clientes = await Cliente.find({
-                $or: [
-                    { nombre: { $regex: cliente, $options: "i" } },
-                    { apellido: { $regex: cliente, $options: "i" } },
-                    { cedula: { $regex: cliente, $options: "i" } }
-                ]
-            });
-            filtro.cliente = { $in: clientes.map(c => c._id) };
-        }
-        // Buscar por técnico (nombre, apellido o cédula)
-        if (tecnico) {
-            const tecnicos = await Tecnico.find({
-                $or: [
-                    { nombre: { $regex: tecnico, $options: "i" } },
-                    { apellido: { $regex: tecnico, $options: "i" } },
-                    { cedula: { $regex: tecnico, $options: "i" } }
-                ]
-            });
-            filtro.tecnico = { $in: tecnicos.map(t => t._id) };
-        }
-        const tickets = await Ticket.find(filtro)
+        const ticket = await Ticket.findById(id)
             .populate("cliente", "nombre apellido cedula")
             .populate("tecnico", "nombre apellido cedula");
-        if (tickets.length === 0) {
+        if (!ticket) {
             return res.status(404).json({
-                msg: "No se encontraron tickets"
+                msg: "Ticket no encontrado"
             });
         }
-        res.json({ tickets });
+        res.json({ ticket });
     } catch (error) {
-        console.error(error);
         res.status(500).json({
-            msg: "Error del servidor al buscar tickets"
+            msg: "Error del servidor"
+        });
+    }
+};
+
+// BUSCAR TICKET POR CÓDIGO
+const buscarTicket = async (req, res) => {
+    try {
+        let { codigo } = req.query;
+        if (!codigo) {
+            return res.status(400).json({
+                msg: "Debe enviar el código del ticket"
+            });
+        }
+        codigo = codigo.trim().toUpperCase();
+        const ticket = await Ticket.findOne({ codigo })
+            .populate("cliente", "nombre apellido cedula")
+            .populate("tecnico", "nombre apellido cedula");
+        if (!ticket) {
+            return res.status(404).json({
+                msg: "Ticket no encontrado"
+            });
+        }
+        res.json({ ticket });
+    } catch (error) {
+        res.status(500).json({
+            msg: "Error del servidor al buscar ticket"
         });
     }
 };
@@ -234,5 +229,6 @@ export {
     obtenerTickets,
     buscarTicket,
     actualizarTicket,
-    eliminarTicket
+    eliminarTicket,
+    obtenerTicketPorId
 };
